@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+.vscode
+*.swp
+
+# Build
+target/
+!target/*.jar
+
+# Logs
+*.log
+logs/
+
+# 本地配置
+*.local.*
+.env.local
+
+# 音频文件（运行时生成）
+audio/
+
+# macOS
+.DS_Store
+
+# Maven wrapper（容器内使用 Maven 镜像）
+.mvn/
+mvnw
+mvnw.cmd
+
+# 文档
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker/

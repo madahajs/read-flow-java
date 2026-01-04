@@ -6,9 +6,9 @@ spring:
     name: readflow
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/readflow?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: 12345678
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/readflow?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:12345678}
   servlet:
     multipart:
       max-file-size: 50MB
@@ -31,4 +31,44 @@ mybatis-plus:
 # 日志配置
 logging:
   level:
-    com.qizhi.readflow: debug
+    com.qizhi.readflow: ${LOG_LEVEL:debug}
+
+# Redis 配置
+spring.data.redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  database: 0
+  timeout: 3000ms
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:readflow-jwt-secret-key-2024-must-be-at-least-256-bits-long}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+# OCR 配置
+ocr:
+  provider: ${OCR_PROVIDER:azure}
+  azure:
+    endpoint: ${OCR_AZURE_ENDPOINT:https://api--1.cognitiveservices.azure.com/}
+    api-key: ${OCR_AZURE_KEY:your-azure-vision-api-key}
+  tesseract:
+    data-path: ${TESSERACT_DATA_PATH:/opt/homebrew/share/tessdata}
+    language: ${TESSERACT_LANGUAGE:chi_sim+eng}
+
+# TTS 配置
+tts:
+  provider: ${TTS_PROVIDER:azure}
+  audio-path: ${TTS_AUDIO_PATH:./audio}
+  azure:
+    subscription-key: ${TTS_AZURE_SUBSCRIPTION_KEY:your-azure-speech-api-key}
+    region: ${TTS_AZURE_REGION:eastus}
+
+# Actuator 健康检查
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized

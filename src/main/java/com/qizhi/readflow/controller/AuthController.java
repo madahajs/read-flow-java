@@ -1,11 +1,12 @@
 package com.qizhi.readflow.controller;
 
-import cn.hutool.core.util.IdUtil;
 import com.qizhi.readflow.common.Result;
 import com.qizhi.readflow.dto.LoginRequest;
 import com.qizhi.readflow.dto.RegisterRequest;
 import com.qizhi.readflow.entity.User;
+import com.qizhi.readflow.service.TokenBlacklistService;
 import com.qizhi.readflow.service.UserService;
+import com.qizhi.readflow.util.JwtUtil;
 import com.qizhi.readflow.vo.LoginVO;
 import com.qizhi.readflow.vo.UserVO;
 import jakarta.validation.Valid;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * 用户注册
@@ -37,9 +40,21 @@ public class AuthController {
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginRequest request) {
         User user = userService.login(request.getEmail(), request.getPassword());
-        // 生成简单的 token (实际项目中应使用 JWT)
-        String token = IdUtil.fastSimpleUUID();
+        // 生成 JWT Token
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail());
         LoginVO loginVO = new LoginVO(token, UserVO.fromEntity(user));
         return Result.success(loginVO);
+    }
+
+    /**
+     * 用户退出登录
+     */
+    @PostMapping("/logout")
+    public Result<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            tokenBlacklistService.addToBlacklist(token);
+        }
+        return Result.success(null);
     }
 }

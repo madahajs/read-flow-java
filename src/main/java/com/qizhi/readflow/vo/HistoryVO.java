@@ -16,6 +16,8 @@ public class HistoryVO {
     private LocalDateTime createdAt;
     private String status;
     private Integer audioDuration;
+    private String audioUrl;
+    private String voiceId;
 
     public static HistoryVO fromEntity(com.qizhi.readflow.entity.ConversionHistory history) {
         HistoryVO vo = new HistoryVO();
@@ -25,6 +27,8 @@ public class HistoryVO {
         vo.setCreatedAt(history.getCreatedAt());
         vo.setStatus(history.getStatus());
         vo.setAudioDuration(history.getAudioDuration());
+        vo.setAudioUrl(history.getAudioUrl());
+        vo.setVoiceId(history.getVoiceId());
         return vo;
     }
 }

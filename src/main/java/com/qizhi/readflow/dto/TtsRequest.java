@@ -16,9 +16,10 @@ public class TtsRequest {
     private String voiceId;
 
     /**
-     * 语速，默认 1.0 (范围 0.5 - 2.0)
+     * 语速，默认 0.9 (范围 0.5 - 2.0)
+     * Azure 神经网络语音默认语速较快，0.9 接近正常阅读速度
      */
-    private Double speed = 1.0;
+    private Double speed = 0.9;
 
     /**
      * 音频格式，默认 mp3

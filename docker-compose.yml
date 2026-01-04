@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: readflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: readflow
+      MYSQL_USER: readflow
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-readflow123}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+      - ./src/main/resources/db/add_voices.sql:/docker-entrypoint-initdb.d/03-voices.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - readflow-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: readflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - readflow-network
+
+  # Spring Boot 应用
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: readflow-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 数据库配置
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/readflow?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: readflow
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-readflow123}
+      
+      # Redis 配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # JWT 配置
+      JWT_SECRET: ${JWT_SECRET:-your-256-bit-secret-key-here-must-be-at-least-32-chars}
+      
+      # OCR 配置
+      OCR_PROVIDER: ${OCR_PROVIDER:-azure}
+      OCR_AZURE_ENDPOINT: ${OCR_AZURE_ENDPOINT}
+      OCR_AZURE_KEY: ${OCR_AZURE_KEY}
+      
+      # TTS 配置
+      TTS_PROVIDER: ${TTS_PROVIDER:-azure}
+      TTS_AZURE_SUBSCRIPTION_KEY: ${TTS_AZURE_SUBSCRIPTION_KEY}
+      TTS_AZURE_REGION: ${TTS_AZURE_REGION:-eastus}
+      
+      # 时区
+      TZ: Asia/Shanghai
+    ports:
+      - "8081:8081"
+    volumes:
+      - audio_data:/app/audio
+    networks:
+      - readflow-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  audio_data:
+    driver: local
+
+networks:
+  readflow-network:
+    driver: bridge
